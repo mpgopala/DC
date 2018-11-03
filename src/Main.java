@@ -21,7 +21,6 @@ class SuzukiKasami
 	public static final int criticalSectionDuration = 3;
 	private ArrayList<Node> nodes = new ArrayList<>();
 	private int timeCounter = 0;
-	private Token token = new Token();
 
 	ArrayList<CSRequest> csRequest = null;
 
@@ -96,8 +95,7 @@ class SuzukiKasami
 		while(true)
 		{
 			requestToken();
-			sendMessages();
-			tick();
+
 			try {
 				Thread.sleep(1000);
 			} catch(InterruptedException e) {
@@ -105,6 +103,8 @@ class SuzukiKasami
 			}
 			timeCounter++;
 			System.out.println("Current time: " + timeCounter);
+			sendMessages();
+			tick();
 
 		}
 	}
@@ -308,7 +308,7 @@ class Token
 
 public class Main
 {
-	private static CSRequest getCSReqeust(int nodeId, int time)
+	private static CSRequest getCSRequest(int nodeId, int time)
 	{
 		CSRequest request = new CSRequest();
 		request.nodeId = nodeId;
@@ -319,13 +319,34 @@ public class Main
 	public static void main(String[] args)
 	{
 		SuzukiKasami sk = SuzukiKasami.getInstance();
-
 		ArrayList<CSRequest> csRequests = new ArrayList<>();
-		csRequests.add(getCSReqeust(0, 0));
-		csRequests.add(getCSReqeust(1, 2));
-		csRequests.add(getCSReqeust(2, 7));
-		csRequests.add(getCSReqeust(3, 7));
-		csRequests.add(getCSReqeust(4, 8));
+
+		if(args.length < 5)
+		{
+			System.out.println("Please supply required arguments");
+			System.out.println("Arguments: <numProcesses> <numRequests> {<processId> <requestedTime>}+");
+			System.out.println("Using default argument set");
+
+			csRequests.add(getCSRequest(0, 0));
+			csRequests.add(getCSRequest(1, 2));
+			csRequests.add(getCSRequest(2, 7));
+			csRequests.add(getCSRequest(3, 7));
+			csRequests.add(getCSRequest(4, 8));
+		}
+		else
+		{
+			int numProcesses = Integer.parseInt(args[0]);
+			System.out.println("numProcesses: " + numProcesses);
+			int numRequests = Integer.parseInt(args[1]);
+
+			for(int i = 0; i < numRequests; i++)
+			{
+				int processId = Integer.parseInt(args[2 + i * 2]);
+				int requestedTime = Integer.parseInt(args[2 + i * 2 + 1]);
+				System.out.println("csRequest: (" + processId + ", " + requestedTime + ")");
+				csRequests.add(getCSRequest(processId, requestedTime));
+			}
+		}
 		sk.setCsRequest(csRequests);
 		sk.execute();
 	}
