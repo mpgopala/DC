@@ -1,46 +1,59 @@
 import java.util.*;
 
-/**
- * Class that holds the request for a critical section from a node.
- */
-class CSRequest
-{
-	/**
-	 * The Node id.
-	 */
-	int nodeId;
-	/**
-	 * The time at which the critical section is requested.
-	 */
-	int time;
-}
-
-/**
- * Helper class to implement sorting on <code>CSRequest</code>.
- */
-class SortById implements Comparator<CSRequest>
-{
-	@Override
-	public int compare(CSRequest o1, CSRequest o2)
-	{
-		return o1.time - o2.time;
-	}
-}
-
 
 /**
  * The main class that implements the SuzukiKasami algorithm.
  */
 class SuzukiKasami
 {
+
+	/**
+	 * Class that holds the request for a critical section from a node.
+	 */
+	static class CSRequest
+	{
+		/**
+		 * The Node id.
+		 */
+		int nodeId;
+		/**
+		 * The time at which the critical section is requested.
+		 */
+		int time;
+
+		/**
+		 * Instantiates a new Cs request.
+		 *
+		 * @param id   the id of the process requesting the CS
+		 * @param time the time at which the critical section is requested.
+		 */
+		CSRequest(int id, int time)
+		{
+			this.nodeId = id;
+			this.time = time;
+		}
+	}
+
+	/**
+	 * Helper class to implement sorting on <code>CSRequest</code>.
+	 */
+	class SortById implements Comparator<CSRequest>
+	{
+		@Override
+		public int compare(CSRequest o1, CSRequest o2)
+		{
+			return o1.time - o2.time;
+		}
+	}
+
 	/**
 	 * Number of processes in the system.
 	 */
-	static int numProcesses = 5;
+	private static int numProcesses = 5;
 	/**
 	 * The default duration a critical section held by any process.
 	 */
-	static final int criticalSectionDuration = 3;
+	private static final int criticalSectionDuration = 3;
 	private ArrayList<Node> nodes = new ArrayList<>();
 	private int timeCounter = 0;
 
@@ -107,7 +120,7 @@ class SuzukiKasami
 	 *
 	 * @return the number of processes
 	 */
-	static int getNumProcesses()
+	private static int getNumProcesses()
 	{
 		return numProcesses;
 	}
@@ -130,7 +143,7 @@ class SuzukiKasami
 	 * @param token  token to send
 	 * @param nodeId id of the destination process
 	 */
-	void sendToken(Token token, int nodeId)
+	private void sendToken(Token token, int nodeId)
 	{
 		System.out.println("Sending token to " + nodes.get(nodeId));
 		nodes.get(nodeId).receiveToken(token);
@@ -142,7 +155,7 @@ class SuzukiKasami
 	 * @param nodeId The id of the source process that wants to broadcast
 	 * @param msg    the msg to be broadcasted.
 	 */
-	void broadcastMessage(int nodeId, RequestMessage msg)
+	private void broadcastMessage(int nodeId, RequestMessage msg)
 	{
 		for(int i = 0; i < numProcesses; i++)
 		{
@@ -212,10 +225,7 @@ class SuzukiKasami
 
 	private static CSRequest getCSRequest(int nodeId, int time)
 	{
-		CSRequest request = new CSRequest();
-		request.nodeId = nodeId;
-		request.time = time;
-		return request;
+		return new CSRequest(nodeId, time);
 	}
 
 	/**
@@ -264,250 +274,251 @@ class SuzukiKasami
 		sk.setCsRequest(csRequests);
 		sk.execute();
 	}
-}
-
-/**
- * This class represents a process in a distributed system.
- */
-class Node
-{
-	private int id;
 
 	/**
-	 * The RN from SuzukiKasami algorithm.
+	 * This class represents a process in a distributed system.
 	 */
-	int[] RN;
-
-	/**
-	 * The Has token.
-	 */
-	private boolean hasToken = false;
-
-	private boolean inCriticalSection = false;
-
-	private Token token = null;
-
-	private int criticalSectionTimer = 0;
-
-	/**
-	 * Sets token.
-	 *
-	 * @param token the token
-	 */
-	void setToken(Token token)
+	class Node
 	{
-		this.token = token;
-		this.hasToken = true;
-	}
+		private int id;
 
-	/**
-	 * Instantiates a new Node.
-	 *
-	 * @param id the id of this process
-	 */
-	Node(int id)
-	{
-		RN = new int[SuzukiKasami.numProcesses];
-		for(int i = 0; i < RN.length; i++)
-			RN[i] = 0;
-		this.id = id;
-	}
+		/**
+		 * The RN from SuzukiKasami algorithm.
+		 */
+		int[] RN;
 
-	@Override
-	public String toString()
-	{
-		return "Node: " + this.id;
-	}
+		/**
+		 * The Has token.
+		 */
+		private boolean hasToken = false;
 
-	/**
-	 * Request token from other processes. This method executes the REQUEST(id, RN) from
-	 * SuzukiKasami algorithm.
-	 */
-	void requestToken()
-	{
-		System.out.println("Requesting token from " + this);
-		if(inCriticalSection)
-			return;
+		private boolean inCriticalSection = false;
 
-		if(hasToken)
+		private Token token = null;
+
+		private int criticalSectionTimer = 0;
+
+		/**
+		 * Sets token.
+		 *
+		 * @param token the token
+		 */
+		void setToken(Token token)
 		{
-			System.out.println(this + "has token. Entering CS");
-			enterCriticalSection();
+			this.token = token;
+			this.hasToken = true;
 		}
-		else
-		{
-			System.out.println("Broadcasting message from " + this);
-			RN[id] = RN[id] + 1;
-			RequestMessage msg = new RequestMessage();
-			msg.setSourceNode(id);
-			msg.setSerialNumber(RN[id]);
-			broadcastMessage(msg);
-		}
-	}
 
-	/**
-	 * Receives the message from other processes.
-	 *
-	 * @param msg the message
-	 */
-	void receiveMessage(RequestMessage msg)
-	{
-//		System.out.println("Message " + msg + " received in " + this);
-		RN[msg.getSourceNode()] = Math.max(RN[msg.getSourceNode()], msg.getSerialNumber());
-		if(hasToken && !inCriticalSection)
+		/**
+		 * Instantiates a new Node.
+		 *
+		 * @param id the id of this process
+		 */
+		Node(int id)
 		{
-			if(RN[msg.getSourceNode()] == token.LN[msg.getSourceNode()] + 1)
-				sendToken(msg.getSourceNode());
+			RN = new int[SuzukiKasami.numProcesses];
+			for(int i = 0; i < RN.length; i++)
+				RN[i] = 0;
+			this.id = id;
 		}
-	}
 
-	/**
-	 * Timer function. When the global timer increments, this process will check if it is in CS.
-	 * If it is in CS, checks if it is time to exit the CS. If it is, it would try to send the token
-	 * to the next process in the queue as per SuzukiKasami algorithm.
-	 */
-	void tick()
-	{
-		if(inCriticalSection)
+		@Override
+		public String toString()
 		{
-			if(criticalSectionTimer > 0)
+			return "Node: " + this.id;
+		}
+
+		/**
+		 * Request token from other processes. This method executes the REQUEST(id, RN) from
+		 * SuzukiKasami algorithm.
+		 */
+		void requestToken()
+		{
+			System.out.println("Requesting token from " + this);
+			if(inCriticalSection)
+				return;
+
+			if(hasToken)
 			{
-				criticalSectionTimer--;
-				if(criticalSectionTimer == 0)
+				System.out.println(this + "has token. Entering CS");
+				enterCriticalSection();
+			}
+			else
+			{
+				System.out.println("Broadcasting message from " + this);
+				RN[id] = RN[id] + 1;
+				RequestMessage msg = new RequestMessage();
+				msg.setSourceNode(id);
+				msg.setSerialNumber(RN[id]);
+				broadcastMessage(msg);
+			}
+		}
+
+		/**
+		 * Receives the message from other processes.
+		 *
+		 * @param msg the message
+		 */
+		void receiveMessage(RequestMessage msg)
+		{
+	//		System.out.println("Message " + msg + " received in " + this);
+			RN[msg.getSourceNode()] = Math.max(RN[msg.getSourceNode()], msg.getSerialNumber());
+			if(hasToken && !inCriticalSection)
+			{
+				if(RN[msg.getSourceNode()] == token.LN[msg.getSourceNode()] + 1)
+					sendToken(msg.getSourceNode());
+			}
+		}
+
+		/**
+		 * Timer function. When the global timer increments, this process will check if it is in CS.
+		 * If it is in CS, checks if it is time to exit the CS. If it is, it would try to send the token
+		 * to the next process in the queue as per SuzukiKasami algorithm.
+		 */
+		void tick()
+		{
+			if(inCriticalSection)
+			{
+				if(criticalSectionTimer > 0)
 				{
-					inCriticalSection = false;
-					exitCriticalSection();
+					criticalSectionTimer--;
+					if(criticalSectionTimer == 0)
+					{
+						inCriticalSection = false;
+						exitCriticalSection();
+					}
 				}
 			}
 		}
-	}
 
-	/**
-	 * Receive token from some other process. After this, the process can
-	 * enter into a CS.
-	 *
-	 * @param token the token
-	 */
-	void receiveToken(Token token)
-	{
-		this.token = token;
-		hasToken = true;
-		enterCriticalSection();
-	}
-
-	private void sendToken(int nodeId)
-	{
-		Token tempToken = token;
-		hasToken = false;
-		token = null;
-		SuzukiKasami.getInstance().sendToken(tempToken, nodeId);
-	}
-
-	private void exitCriticalSection()
-	{
-		System.out.println(this + " is exiting CS");
-		token.LN[id] = RN[id];
-
-		for(int i = 0; i < SuzukiKasami.getNumProcesses(); i++)
+		/**
+		 * Receive token from some other process. After this, the process can
+		 * enter into a CS.
+		 *
+		 * @param token the token
+		 */
+		void receiveToken(Token token)
 		{
-			if(i == id)
-				continue;
-			if(RN[i] == token.LN[i] + 1)
+			this.token = token;
+			hasToken = true;
+			enterCriticalSection();
+		}
+
+		private void sendToken(int nodeId)
+		{
+			Token tempToken = token;
+			hasToken = false;
+			token = null;
+			SuzukiKasami.getInstance().sendToken(tempToken, nodeId);
+		}
+
+		private void exitCriticalSection()
+		{
+			System.out.println(this + " is exiting CS");
+			token.LN[id] = RN[id];
+
+			for(int i = 0; i < SuzukiKasami.getNumProcesses(); i++)
 			{
-				if(!token.Q.contains(i))
-					token.Q.add(i);
+				if(i == id)
+					continue;
+				if(RN[i] == token.LN[i] + 1)
+				{
+					if(!token.Q.contains(i))
+						token.Q.add(i);
+				}
+			}
+
+			if(token.Q.size() > 0)
+			{
+				int nodeId = token.Q.remove();
+				sendToken(nodeId);
 			}
 		}
 
-		if(token.Q.size() > 0)
+		private void enterCriticalSection()
 		{
-			int nodeId = token.Q.remove();
-			sendToken(nodeId);
+			if(inCriticalSection)
+				return;
+
+			System.out.println(this + " is entering CS");
+			inCriticalSection = true;
+			criticalSectionTimer = SuzukiKasami.criticalSectionDuration;
+		}
+
+		private void broadcastMessage(RequestMessage msg)
+		{
+			SuzukiKasami.getInstance().broadcastMessage(id, msg);
 		}
 	}
 
-	private void enterCriticalSection()
+	/**
+	 * The type Request message from SuzukiKasami algorithm.
+	 */
+	class RequestMessage
 	{
-		if(inCriticalSection)
-			return;
+		private int sourceNode;
+		private int serialNumber;
 
-		System.out.println(this + " is entering CS");
-		inCriticalSection = true;
-		criticalSectionTimer = SuzukiKasami.criticalSectionDuration;
+		/**
+		 * Gets source node.
+		 *
+		 * @return the source node
+		 */
+		int getSourceNode()
+		{
+			return sourceNode;
+		}
+
+		/**
+		 * Sets source node.
+		 *
+		 * @param sourceNode the source node
+		 */
+		void setSourceNode(int sourceNode)
+		{
+			this.sourceNode = sourceNode;
+		}
+
+		/**
+		 * Gets serial number.
+		 *
+		 * @return the serial number
+		 */
+		int getSerialNumber()
+		{
+			return serialNumber;
+		}
+
+		/**
+		 * Sets serial number.
+		 *
+		 * @param serialNumber the serial number
+		 */
+		void setSerialNumber(int serialNumber)
+		{
+			this.serialNumber = serialNumber;
+		}
+
+		@Override
+		public String toString()
+		{
+			return "RequestMessage(" + sourceNode + ", " + serialNumber + ")";
+		}
 	}
-
-	private void broadcastMessage(RequestMessage msg)
-	{
-		SuzukiKasami.getInstance().broadcastMessage(id, msg);
-	}
-}
-
-/**
- * The type Request message from SuzukiKasami algorithm.
- */
-class RequestMessage
-{
-	private int sourceNode;
-	private int serialNumber;
 
 	/**
-	 * Gets source node.
-	 *
-	 * @return the source node
+	 * The type Token.
 	 */
-	int getSourceNode()
+	class Token
 	{
-		return sourceNode;
+		/**
+		 * The Q.
+		 */
+		Queue<Integer> Q = new LinkedList<>();
+		/**
+		 * The LN.
+		 */
+		int[] LN = new int[SuzukiKasami.numProcesses];
 	}
 
-	/**
-	 * Sets source node.
-	 *
-	 * @param sourceNode the source node
-	 */
-	void setSourceNode(int sourceNode)
-	{
-		this.sourceNode = sourceNode;
-	}
-
-	/**
-	 * Gets serial number.
-	 *
-	 * @return the serial number
-	 */
-	int getSerialNumber()
-	{
-		return serialNumber;
-	}
-
-	/**
-	 * Sets serial number.
-	 *
-	 * @param serialNumber the serial number
-	 */
-	void setSerialNumber(int serialNumber)
-	{
-		this.serialNumber = serialNumber;
-	}
-
-	@Override
-	public String toString()
-	{
-		return "RequestMessage(" + sourceNode + ", " + serialNumber + ")";
-	}
-}
-
-/**
- * The type Token.
- */
-class Token
-{
-	/**
-	 * The Q.
-	 */
-	Queue<Integer> Q = new LinkedList<>();
-	/**
-	 * The LN.
-	 */
-	int[] LN = new int[SuzukiKasami.numProcesses];
 }
