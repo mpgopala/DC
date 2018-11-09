@@ -15,7 +15,7 @@ class SortById implements Comparator<CSRequest>
 	}
 }
 
-class SuzukiKasami
+public class SuzukiKasami
 {
 	public static int numProcesses = 5;
 	public static final int criticalSectionDuration = 3;
@@ -139,6 +139,49 @@ class SuzukiKasami
 		}
 
 		msgList.clear();
+	}
+
+	private static CSRequest getCSRequest(int nodeId, int time)
+	{
+		CSRequest request = new CSRequest();
+		request.nodeId = nodeId;
+		request.time = time;
+		return request;
+	}
+
+	public static void main(String[] args)
+	{
+		SuzukiKasami sk = SuzukiKasami.getInstance();
+		ArrayList<CSRequest> csRequests = new ArrayList<>();
+
+		if(args.length < 5)
+		{
+			System.out.println("Please supply required arguments");
+			System.out.println("Arguments: <numProcesses> <numRequests> {<processId> <requestedTime>}+");
+			System.out.println("Using default argument set");
+
+			csRequests.add(getCSRequest(0, 0));
+			csRequests.add(getCSRequest(1, 2));
+			csRequests.add(getCSRequest(2, 7));
+			csRequests.add(getCSRequest(3, 7));
+			csRequests.add(getCSRequest(4, 8));
+		}
+		else
+		{
+			int numProcesses = Integer.parseInt(args[0]);
+			System.out.println("numProcesses: " + numProcesses);
+			int numRequests = Integer.parseInt(args[1]);
+
+			for(int i = 0; i < numRequests; i++)
+			{
+				int processId = Integer.parseInt(args[2 + i * 2]);
+				int requestedTime = Integer.parseInt(args[2 + i * 2 + 1]);
+				System.out.println("csRequest: (" + processId + ", " + requestedTime + ")");
+				csRequests.add(getCSRequest(processId, requestedTime));
+			}
+		}
+		sk.setCsRequest(csRequests);
+		sk.execute();
 	}
 }
 
@@ -304,50 +347,4 @@ class Token
 {
 	public Queue<Integer> Q = new LinkedList<>();
 	public int[] LN = new int[SuzukiKasami.numProcesses];
-}
-
-public class Main
-{
-	private static CSRequest getCSRequest(int nodeId, int time)
-	{
-		CSRequest request = new CSRequest();
-		request.nodeId = nodeId;
-		request.time = time;
-		return request;
-	}
-
-	public static void main(String[] args)
-	{
-		SuzukiKasami sk = SuzukiKasami.getInstance();
-		ArrayList<CSRequest> csRequests = new ArrayList<>();
-
-		if(args.length < 5)
-		{
-			System.out.println("Please supply required arguments");
-			System.out.println("Arguments: <numProcesses> <numRequests> {<processId> <requestedTime>}+");
-			System.out.println("Using default argument set");
-
-			csRequests.add(getCSRequest(0, 0));
-			csRequests.add(getCSRequest(1, 2));
-			csRequests.add(getCSRequest(2, 7));
-			csRequests.add(getCSRequest(3, 7));
-			csRequests.add(getCSRequest(4, 8));
-		}
-		else
-		{
-			int numProcesses = Integer.parseInt(args[0]);
-			System.out.println("numProcesses: " + numProcesses);
-			int numRequests = Integer.parseInt(args[1]);
-
-			for(int i = 0; i < numRequests; i++)
-			{
-				int processId = Integer.parseInt(args[2 + i * 2]);
-				int requestedTime = Integer.parseInt(args[2 + i * 2 + 1]);
-				System.out.println("csRequest: (" + processId + ", " + requestedTime + ")");
-				csRequests.add(getCSRequest(processId, requestedTime));
-			}
-		}
-		sk.setCsRequest(csRequests);
-		sk.execute();
-	}
 }
