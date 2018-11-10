@@ -38,7 +38,7 @@ public class ChandyMisraHaas
 				{
 					Message m=new Message(initProcess,i,j);
 					messageList.add(m);
-					count+=1;
+					count++;
 				}
 			}
 		}
@@ -65,8 +65,8 @@ public class ChandyMisraHaas
 		System.out.println();
 		System.out.println("NumProcesses: number of processes in the system");
 		System.out.println("WaitForGraph space separated wait for graph. This should be a " +
-							"square matrix where 1 denotes a process in row depends on a process in column. " +
-							"0 otherwise.");
+				"square matrix where 1 denotes a process in row depends on a process in column. " +
+				"0 otherwise.");
 		System.out.println("InitiatorProcess: The id of the process that initiates the deadlock detection");
 	}
 
@@ -117,7 +117,15 @@ public class ChandyMisraHaas
 
 		for(int i = 0; i < numProcesses * numProcesses; i++)
 		{
-			wfg[i / numProcesses][i%numProcesses] = Integer.parseInt(args[iter++]) > 0;
+			boolean dependent = false;
+
+			try
+			{
+				dependent = Integer.parseInt(args[iter++]) > 0;
+			}
+			catch (Exception e) {}
+
+			wfg[i / numProcesses][i%numProcesses] = dependent;
 		}
 		for(int i = 0; i < numProcesses; i++)
 		{
