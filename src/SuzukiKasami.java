@@ -179,9 +179,12 @@ class SuzukiKasami
 		{
 			requestToken();
 
-			try {
+			try
+			{
 				Thread.sleep(1000);
-			} catch(InterruptedException e) {
+			}
+			catch(InterruptedException e)
+			{
 				e.printStackTrace();
 			}
 			timeCounter++;
@@ -216,7 +219,6 @@ class SuzukiKasami
 	{
 		for(Message msg: msgList)
 		{
-//			System.out.println("Sending message (" + msg.msg + ") to node :" + nodes.get(msg.nodeId));
 			nodes.get(msg.nodeId).receiveMessage(msg.msg);
 		}
 
@@ -520,5 +522,4 @@ class SuzukiKasami
 		 */
 		int[] LN = new int[SuzukiKasami.numProcesses];
 	}
-
 }
